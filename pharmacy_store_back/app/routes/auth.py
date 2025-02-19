@@ -77,54 +77,7 @@ def token_refresh():
     new_access_token = generate_token(user)  # 生成新的访问 token
     return jsonify(access_token=new_access_token), 200 
 
-@auth.route('/user/profile', methods=['GET'])
-@jwt_required()
-def get_user_profile():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    if user:
-        return jsonify({
-            "code": 0,
-            "user": {
-                "username": user.username,
-                "email": user.email,
-                "phone": user.phone,
-                "address": user.address,
-                "isAdmin": user.is_admin,
-            }
-        }), 200
-    return jsonify({"code": 1, "message": "User not found."}), 404
 
-@auth.route('/user/profile', methods=['PUT'])
-@jwt_required()
-def update_user_profile():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    if not user:
-        return jsonify({"code": 1, "message": "User not found."}), 404
 
-    data = request.get_json()
-    user.email = data.get('email', user.email)
-    user.phone = data.get('phone', user.phone)
-    user.address = data.get('address', user.address)
-    db.session.commit()
-
-    return jsonify({"code": 0, "message": "User profile updated successfully!"}), 200
-
-@auth.route('/user/reset-password', methods=['POST'])
-@jwt_required()
-def reset_password():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    if not user:
-        return jsonify({"code": 1, "message": "User not found."}), 404
-
-    # 这里假设您有一个发送邮件的函数 send_email
-    new_password = "new_password"  # 生成新密码的逻辑
-    user.password = generate_password_hash(new_password)
-    db.session.commit()
-
-    # send_email(user.email, "Password Reset", f"Your new password is: {new_password}")
-    return jsonify({"code": 0, "message": "Password reset successfully! Please check your email."}), 200
 
 

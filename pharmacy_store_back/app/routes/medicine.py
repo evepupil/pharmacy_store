@@ -18,8 +18,37 @@ def allowed_file(filename):
 
 @medicine_bp.route('/medicines', methods=['GET'])
 def get_medicines():
-    medicines = Medicine.query.all()  # 查询所有药品
-    return jsonify({"code": 0, "medicines":[{
+    # 获取查询参数
+    limit = request.args.get('limit', default=20, type=int)  # 默认每页20条
+    index = request.args.get('index', default=0, type=int)  # 默认从第0条开始
+    keyword = request.args.get('keyword', default='', type=str)  # 搜索关键字
+    category = request.args.get('category', default='', type=str)  # 药品类别
+    is_prescription = request.args.get('is_prescription', default=None, type=str)  # 是否为处方药
+    is_healthcare = request.args.get('is_healthcare', default=None, type=str)  # 是否为保健品
+
+    # 构建查询
+    query = Medicine.query
+
+    # 根据关键字过滤
+    if keyword:
+        query = query.filter(Medicine.name.like(f'%{keyword}%'))
+
+    # 根据类别过滤
+    if category:
+        query = query.filter(Medicine.category == category)
+
+    # 根据是否为处方药过滤
+    if is_prescription is not None:
+        query = query.filter(Medicine.is_prescription == (is_prescription.lower() == 'true'))
+
+    # 根据是否为保健品过滤
+    if is_healthcare is not None:
+        query = query.filter(Medicine.is_healthcare == (is_healthcare.lower() == 'true'))
+
+    # 分页
+    medicines = query.offset(index).limit(limit).all()  # 分页查询
+
+    return jsonify({"code": 0, "medicines": [{
         "id": medicine.id,
         "name": medicine.name,
         "description": medicine.description,
@@ -28,7 +57,7 @@ def get_medicines():
         "image": base64.b64encode(medicine.image).decode('utf-8') if medicine.image else None,
     } for medicine in medicines]}), 200
 
-@medicine_bp.route('/medicines', methods=['POST'])
+@medicine_bp.route('/medicines/add', methods=['POST'])
 @jwt_required()
 def add_medicine():
     current_user = get_jwt_identity()  # 获取当前用户身份
@@ -43,28 +72,24 @@ def add_medicine():
         return jsonify({"code": 1, "msg": "Admin access required."}), 403  # 返回403 Forbidden
 
     data = request.form  # 使用 form 数据
-    file = request.files['image']  # 获取上传的文件
+    image = request.files.get('image')  # 获取上传的文件
 
-    if file:
-        image_data = file.read()  # 读取文件数据
-        print(f'后端收到的data: {data}')
-        new_medicine = Medicine(
-            name=data.get('name'),
-            category=data.get('category'),
-            price=data.get('price'),
-            description=data.get('description'),
-            image=image_data,  # 存储图片数据
-            sales=0,  # 初始销量为0
-            created_at=datetime.utcnow(),  # 设置创建时间为当前时间
-            is_prescription=True if data.get('is_prescription') == 'True' else False,  # 从请求中获取是否为处方药
-            is_healthcare=True if data.get('is_healthcare') == 'True' else False,  # 从请求中获取是否为保健品
-            stock=data.get('stock', 0)  # 新增库存字段
-        )
-        print(f'后端编辑好的data: {new_medicine.is_healthcare}')
-        db.session.add(new_medicine)
-        db.session.commit()
-        return jsonify({"code": 0, "message": "Medicine added successfully!"}), 200
-    return jsonify({"code": 1, "message": "No image provided."}), 400 
+    new_medicine = Medicine(
+        name=data['name'],
+        category=data['category'],
+        description=data['description'],
+        price=int(data['price']),
+        stock=int(data['stock']),
+        is_prescription= False if data.get('is_prescription')== 'false' else True,
+        is_healthcare= False if data.get('is_healthcare')== 'false' else True,
+    )
+
+    if image:
+        new_medicine.image = image.read()  # 存储图片数据
+
+    db.session.add(new_medicine)
+    db.session.commit()
+    return jsonify({"code": 0, "message": "Medicine added successfully!"}), 200
 
 @medicine_bp.route('/medicines/batch-delete', methods=['DELETE'])
 @jwt_required()
