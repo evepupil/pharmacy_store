@@ -132,7 +132,7 @@ def complete_order(order_id):
             db.session.commit()
             return jsonify({"code": 0, "message": "Order completed successfully!"}), 200
         else:
-            return jsonify({"code": 1, "message": "Order is not in a pending state."}), 400
+            return jsonify({"code": 1, "message": "Order is not in a pending state."}), 200
     return jsonify({"code": 1, "message": "Order not found."}), 404
 
 @order_bp.route('/orders/batch_delete', methods=['DELETE'])
@@ -143,7 +143,7 @@ def batch_delete_orders():
     current_user = int(get_jwt_identity())
 
     if not order_ids:
-        return jsonify({"code": 1, "message": "No orders selected for deletion."}), 400
+        return jsonify({"code": 1, "message": "No orders selected for deletion."}), 200
 
     deleted_orders = []
     for order_id in order_ids:
@@ -155,7 +155,7 @@ def batch_delete_orders():
             db.session.delete(order)
             deleted_orders.append(order_id)
         else:
-            return jsonify({"code": 1, "message": "Order not found or not authorized."}), 400
+            return jsonify({"code": 1, "message": "Order not found or not authorized."}), 200
 
     db.session.commit()
     return jsonify({"code": 0, "message": "Orders deleted successfully!", "deleted_orders": deleted_orders}), 200 

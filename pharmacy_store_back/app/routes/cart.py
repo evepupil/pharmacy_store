@@ -25,7 +25,7 @@ def add_to_cart():
     quantities = data.get('quantities', [])  # 接受一个数量数组
 
     if len(medicine_ids) != len(quantities):
-        return jsonify({"code": 1, "message": "Mismatch between medicine IDs and quantities."}), 400
+        return jsonify({"code": 1, "message": "Mismatch between medicine IDs and quantities."}), 200
 
     for medicine_id, quantity in zip(medicine_ids, quantities):
         medicine = Medicine.query.get(medicine_id)
@@ -33,7 +33,7 @@ def add_to_cart():
             return jsonify({"code": 1, "message": f"Medicine ID {medicine_id} not found."}), 404  # 药品不存在
 
         if medicine.stock < quantity:
-            return jsonify({"code": 2, "message": f"Insufficient stock for medicine ID {medicine_id}."}), 400  # 库存不足
+            return jsonify({"code": 2, "message": f"Insufficient stock for medicine ID {medicine_id}."}), 200  # 库存不足
 
         new_cart_item = Cart(user_id=current_user, medicine_id=medicine_id, quantity=quantity)
         db.session.add(new_cart_item)
@@ -55,7 +55,7 @@ def delete_cart_items():
             db.session.delete(cart_item)
             deleted_items.append(item_id)
         else:
-            return jsonify({"code": 1, "message": "Item not found or not authorized."}), 400
+            return jsonify({"code": 1, "message": "Item not found or not authorized."}), 200
     db.session.commit()
     return jsonify({"code": 0, "message": "Items removed from cart!", "deleted_items": deleted_items}), 200
 
@@ -70,7 +70,7 @@ def checkout_cart():
     db.session.add(new_order)
 
     if len(items_to_checkout) == 0:
-        return jsonify({"code": 1, "message": "No items to checkout."}), 400
+        return jsonify({"code": 1, "message": "No items to checkout."}), 200
 
     for item in items_to_checkout:
         cart_item_id = item['id']

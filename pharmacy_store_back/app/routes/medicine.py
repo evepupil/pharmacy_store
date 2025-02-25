@@ -54,7 +54,7 @@ def get_medicines():
         "description": medicine.description,
         "price": str(medicine.price),
         "stock": medicine.stock,
-        "image": base64.b64encode(medicine.image).decode('utf-8') if medicine.image else None,
+        #"image": base64.b64encode(medicine.image).decode('utf-8') if medicine.image else None,
     } for medicine in medicines]}), 200
 
 @medicine_bp.route('/medicines/add', methods=['POST'])
@@ -109,7 +109,7 @@ def batch_delete_medicines():
     medicine_ids = data.get('medicine_ids', [])  # 获取要删除的药品 ID 列表
 
     if not medicine_ids:
-        return jsonify({"code": 1, "msg": "No medicine IDs provided."}), 400  # 返回400 Bad Request
+        return jsonify({"code": 1, "msg": "No medicine IDs provided."}), 200  # 返回200 Bad Request
 
     # 批量删除药品
     medicines_to_delete = Medicine.query.filter(Medicine.id.in_(medicine_ids)).all()
@@ -169,7 +169,7 @@ def get_medicines_by_ids():
     medicine_ids = data.get('ids', [])  # 获取药品 ID 列表
 
     if not medicine_ids:
-        return jsonify({"code": 1, "message": "No medicine IDs provided."}), 400  # 没有提供药品 ID
+        return jsonify({"code": 1, "message": "No medicine IDs provided."}), 200  # 没有提供药品 ID
 
     medicines = Medicine.query.filter(Medicine.id.in_(medicine_ids)).all()  # 查询药品
 
@@ -189,3 +189,34 @@ def get_medicines_by_ids():
     } for medicine in medicines]
 
     return jsonify({"code": 0, "medicines": medicine_data}), 200  # 返回药品信息
+
+@medicine_bp.route('/medicines/recommendations', methods=['GET'])
+def get_recommendations():
+    # 获取新品推荐（根据创建时间倒序）
+    new_products = Medicine.query.order_by(Medicine.created_at.desc()).limit(5).all()  # 获取最新的5个药品
+
+    # 获取热门推荐（根据销量由高到低，排除销量为0的药品）
+    hot_products = Medicine.query.filter(Medicine.sales > 0).order_by(Medicine.sales.desc()).limit(5).all()  # 获取销量最高的5个药品，排除销量为0的药品
+
+    # 构建返回数据
+    new_products_data = [{
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": str(product.price),
+        "stock": product.stock,
+    } for product in new_products]
+
+    hot_products_data = [{
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "price": str(product.price),
+        "stock": product.stock,
+    } for product in hot_products]
+
+    return jsonify({
+        "code": 0,
+        "newMedicines": new_products_data,
+        "hotMedicines": hot_products_data,
+    }), 200
