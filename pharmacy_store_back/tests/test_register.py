@@ -10,9 +10,6 @@ def test_register_new_user():
         'is_admin': 0
     })
     
-    print("Response Code:", response.status_code)  # 打印状态码
-    print("Response JSON:", response.json())  # 打印返回的 JSON 数据
-    
     assert response.status_code == 201  # 假设注册成功返回 201
     assert 'User registered successfully!' in response.text  # 假设返回的消息
     print("Test 'test_register_new_user' passed. User registered successfully.")

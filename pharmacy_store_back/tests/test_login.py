@@ -21,7 +21,7 @@ def test_login_admin():
     print("Response Code:", response.status_code)  # 打印状态码
     print("Response JSON:", response.json())  # 打印返回的 JSON 数据
     
-    assert response.status_code == 200  # 假设登录成功返回 200
+    assert response.status_code == 200  
     assert 'token' in response.json()  # 检查是否返回 token
     assert response.json()['user']['is_admin'] == 1  # 确保用户类型为管理员
     print("Test 'test_login_admin' passed. Admin user logged in successfully.")

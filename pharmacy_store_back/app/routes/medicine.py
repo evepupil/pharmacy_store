@@ -22,9 +22,9 @@ def get_medicines():
     limit = request.args.get('limit', default=20, type=int)  # 默认每页20条
     index = request.args.get('index', default=0, type=int)  # 默认从第0条开始
     keyword = request.args.get('keyword', default='', type=str)  # 搜索关键字
-    category = request.args.get('category', default='', type=str)  # 药品类别
     is_prescription = request.args.get('is_prescription', default=None, type=str)  # 是否为处方药
     is_healthcare = request.args.get('is_healthcare', default=None, type=str)  # 是否为保健品
+    categories = request.args.getlist('categories')  # 获取类别列表
 
     # 构建查询
     query = Medicine.query
@@ -34,8 +34,8 @@ def get_medicines():
         query = query.filter(Medicine.name.like(f'%{keyword}%'))
 
     # 根据类别过滤
-    if category:
-        query = query.filter(Medicine.category == category)
+    if categories:
+        query = query.filter(Medicine.category.in_(categories))
 
     # 根据是否为处方药过滤
     if is_prescription is not None:
@@ -48,14 +48,17 @@ def get_medicines():
     # 分页
     medicines = query.offset(index).limit(limit).all()  # 分页查询
 
-    return jsonify({"code": 0, "medicines": [{
-        "id": medicine.id,
-        "name": medicine.name,
-        "description": medicine.description,
-        "price": str(medicine.price),
-        "stock": medicine.stock,
-        #"image": base64.b64encode(medicine.image).decode('utf-8') if medicine.image else None,
-    } for medicine in medicines]}), 200
+    return jsonify({
+        "code": 0,
+        "medicines": [{
+            "id": medicine.id,
+            "name": medicine.name,
+            "description": medicine.description,
+            "price": str(medicine.price),
+            "stock": medicine.stock,
+            "sales": medicine.sales  # 返回销量信息
+        } for medicine in medicines]
+    }), 200
 
 @medicine_bp.route('/medicines/add', methods=['POST'])
 @jwt_required()

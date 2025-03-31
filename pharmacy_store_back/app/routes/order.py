@@ -36,7 +36,7 @@ def get_orders():
 @jwt_required()
 def create_order():
     data = request.get_json()
-    medicine_items = data['medicine_items']  # 假设您有一个药品 ID 和数量的列表
+    medicine_items = data['medicine_items']  
 
     total_price = 0
     new_order = Order(user_id=get_jwt_identity(), status='Pending', total_price=total_price)
@@ -51,6 +51,7 @@ def create_order():
             order_item = OrderItem(order_id=new_order.id, medicine_id=medicine_id, quantity=quantity)
             db.session.add(order_item)  # 添加订单项
             medicine.stock -= quantity  # 扣除库存
+            medicine.sales += quantity # 增加销量
             db.session.add(medicine)  # 更新药品库存
 
     new_order.total_price = total_price  # 设置订单总价格

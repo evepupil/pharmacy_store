@@ -8,19 +8,6 @@ from app.utils.utils import generate_token, decode_token  # 导入 generate_toke
 auth = Blueprint('auth', __name__)
 
 
-@auth.route('/protected', methods=['GET'])
-@jwt_required()
-def protected():
-    auth_header = request.headers.get('Authorization', None)
-    if auth_header:
-        token = auth_header.split(" ")[1]  # 获取 Bearer 后面的 token
-    current_user = decode_token(token)
-    user_id = current_user['sub']  # 提取用户 ID
-    is_admin = current_user['is_admin']  # 提取用户类型
-    print(f'当前用户是：{current_user}')
-    return jsonify(logged_in_as={'user_id': user_id, 'is_admin': is_admin}), 200
-
-
 @auth.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -41,7 +28,6 @@ def login():
 
 @auth.route('/logout', methods=['POST'])
 def logout():
-    # JWT 注销通常不需要在服务器端处理，因为 JWT 是无状态的
     return jsonify({"code": 0, "message": "Logout successful!"}), 200
 
 @auth.route('/register', methods=['POST'])
@@ -66,16 +52,7 @@ def register():
     
     return jsonify({"code": 0, "message": "User registered successfully!"}), 200
 
-@auth.route('/refresh', methods=['POST'])
-@jwt_required()
-def token_refresh():
-    auth_header = request.headers.get('Authorization', None)
-    if auth_header:
-        token = auth_header.split(" ")[1]  # 获取 Bearer 后面的 token
-    current_user = decode_token(token)
-    user = User.query.filter_by(id=current_user['sub']).first()
-    new_access_token = generate_token(user)  # 生成新的访问 token
-    return jsonify(access_token=new_access_token), 200 
+
 
 
 

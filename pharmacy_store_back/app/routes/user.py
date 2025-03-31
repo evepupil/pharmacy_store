@@ -15,8 +15,8 @@ def get_users():
     current_user_id = get_jwt_identity()
     current_user = User.query.get(current_user_id)
     if not current_user.is_admin:
-        return jsonify({"code": 1, "message": "Access denied."}), 200  # 如果不是管理员，返回200
-    users = User.query.all()  # 获取所有用户
+        return jsonify({"code": 1, "message": "Access denied."}), 200  
+    users = User.query.all()  
     return jsonify({
         "code": 0,
         "users": [{
@@ -25,9 +25,9 @@ def get_users():
             "email": user.email,
             "phone": user.phone,
             "address": user.address,
-            "is_admin": user.is_admin  # 返回用户类型
+            "is_admin": user.is_admin  
         } for user in users]
-    }), 200  # 返回 200 状态码
+    }), 200 
 
 @user_bp.route('/users/<int:user_id>', methods=['DELETE'])
 @jwt_required()
@@ -35,7 +35,7 @@ def delete_user(user_id):
     current_user_id = get_jwt_identity()
     current_user = User.query.get(current_user_id)
     if not current_user.is_admin:
-        return jsonify({"code": 2, "message": "Access denied."}), 200  # 如果不是管理员，返回200
+        return jsonify({"code": 2, "message": "Access denied."}), 200 
     user = User.query.get(user_id)
     if user:
         db.session.delete(user)
@@ -46,13 +46,13 @@ def delete_user(user_id):
 @user_bp.route('/user/reset-password', methods=['POST'])
 @jwt_required()
 def reset_password():
-    current_user_id = get_jwt_identity()  # 获取当前用户身份
-    user = User.query.get(current_user_id)  # 获取用户对象
+    current_user_id = get_jwt_identity()  
+    user = User.query.get(current_user_id) 
 
     if not user:
         return jsonify({"code": 1, "message": "用户未找到"}), 200
 
-    data = request.get_json()  # 获取请求数据
+    data = request.get_json() 
     old_password = data.get('old_password')
     new_password = data.get('new_password')
 
@@ -61,8 +61,8 @@ def reset_password():
         return jsonify({"code": 2, "message": "原密码错误"}), 200
 
     # 更新密码
-    user.password = generate_password_hash(new_password)  # 哈希新密码
-    db.session.commit()  # 提交更改
+    user.password = generate_password_hash(new_password) 
+    db.session.commit()  
 
     return jsonify({"code": 0, "message": "密码重置成功"}), 200 
 
@@ -108,7 +108,7 @@ def update_user(user_id):
     user = User.query.get(user_id)
 
     if not user:
-        return jsonify({"code": 2, "message": "User not found."}), 200  # 用户未找到
+        return jsonify({"code": 2, "message": "User not found."}), 200  
 
     # 检查当前用户是否为管理员
     if not current_user.is_admin:
@@ -119,5 +119,5 @@ def update_user(user_id):
     user.phone = data.get('phone', user.phone)
     user.address = data.get('address', user.address)
 
-    db.session.commit()  # 提交更改
-    return jsonify({"code": 0, "message": "User updated successfully!"}), 200  # 更新成功
+    db.session.commit()  
+    return jsonify({"code": 0, "message": "User updated successfully!"}), 200  
